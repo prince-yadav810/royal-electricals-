@@ -1,0 +1,86 @@
+const products = [
+    {
+      id: 1,
+      title: 'Power & Hand Tools',
+      image: '/images/Products_preview/PowerTools&HandTools.jpg',
+      color: 'from-primary-500 to-primary-700',
+      link: '/products/hardware/power-hand-tools'
+    },
+    {
+      id: 2,
+      title: 'Lugs & Glands',
+      image: '/images/Products_preview/Lugs&Glands.jpg',
+      color: 'from-secondary-500 to-secondary-700',
+      link: '/products/electrical/lugs-glands'
+    },
+    {
+      id: 3,
+      title: 'Switchgears',
+      image: '/images/Products_preview/Switchgears.jpg',
+      color: 'from-primary-500 to-primary-700',
+      link: '/products/electrical/switchgears'
+    },
+    {
+      id: 4,
+      title: 'Tarpaulin',
+      image: '/images/Products_preview/Tarpaulin.jpg',
+      color: 'from-secondary-500 to-secondary-700',
+      link: '/products/hardware/tarpaulin'
+    },
+    {
+      id: 5,
+      title: 'Nuts, Bolts & Fasteners',
+      image: '/images/Products_preview/NutsBolts&Fasteners.jpg',
+      color: 'from-primary-500 to-primary-700',
+      link: '/products/hardware/fasteners'
+    },
+    {
+      id: 6,
+      title: 'Waterproofing',
+      image: '/images/Products_preview/waterProofing.jpg',
+      color: 'from-secondary-500 to-secondary-700',
+      link: '/products/construction-chemicals/waterproofing'
+    },
+    {
+      id: 7,
+      title: 'Wood Coating',
+      image: '/images/Products_preview/woodPainting.jpg',
+      color: 'from-primary-400 to-primary-600',
+      link: '/products/construction-chemicals/wood-coatings'
+    },
+    {
+      id: 8,
+      title: 'TMT Bars',
+      image: '/images/Products_preview/TMTBars.jpg',
+      color: 'from-secondary-600 to-secondary-800',
+      link: '/products/structural-steel/tmt-bars'
+    },
+    {
+      id: 9,
+      title: 'Fall Protection',
+      image: '/images/Products_preview/FallProtection.jpg',
+      color: 'from-primary-600 to-primary-800',
+      link: '/products/safety-ppe/fall-protection'
+    },
+    {
+      id: 10,
+      title: 'Earth Moving Equipment',
+      image: '/images/Products_preview/EarthMovingEquipment.jpg',
+      color: 'from-primary-500 to-primary-700',
+      link: '/products/construction-equipment/earth-moving'
+    },
+    {
+      id: 11,
+      title: 'CPVC Pipes & Fittings',
+      image: '/images/Products_preview/CPVCPipes&Fittings.jpg',
+      color: 'from-secondary-500 to-secondary-700',
+      link: '/products/pipes-fittings/cpvc'
+    },
+    {
+      id: 12,
+      title: 'Flanges & Gaskets',
+      image: '/images/Products_preview/Flanges&Gaskets.jpg',
+      color: 'from-gray-600 to-gray-800',
+      link: '/products/pipes-fittings/flanges-gaskets'
+    }
+  ];

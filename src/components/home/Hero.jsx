@@ -25,6 +25,16 @@ const Hero = () => {
     const isMobile = window.innerWidth < 768;
 
     const ctx = gsap.context(() => {
+      // Keep each glint attached near the end as its curve drifts.
+      const positionGlint = (lineNumber, progress) => {
+        const line = heroRef.current.querySelector(`.wavy-line-${lineNumber}`);
+        const glint = heroRef.current.querySelector(`.gold-glint-${lineNumber}`);
+        const point = line.getPointAtLength(line.getTotalLength() * progress);
+        glint.setAttribute('transform', `translate(${point.x} ${point.y})`);
+      };
+      positionGlint(1, 0.9);
+      positionGlint(2, 0.94);
+
       // Initial animation timeline
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
@@ -71,6 +81,7 @@ const Hero = () => {
           ease: 'sine.inOut',
           yoyo: true,
           repeat: -1,
+          onUpdate: () => positionGlint(1, 0.9),
         });
 
         gsap.to('.wavy-line-2', {
@@ -80,6 +91,7 @@ const Hero = () => {
           yoyo: true,
           repeat: -1,
           delay: 1,
+          onUpdate: () => positionGlint(2, 0.94),
         });
       }
 
@@ -168,21 +180,62 @@ const Hero = () => {
         <div className="absolute bottom-20 left-1/4 w-72 h-72 bg-primary-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" style={{ animationDelay: '4s' }}></div>
 
         {/* Floating Wavy Lines */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <svg aria-hidden="true" className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="hero-gold-line" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0%" stopColor="#99651b" stopOpacity="0.15" />
+              <stop offset="18%" stopColor="#b88628" stopOpacity="0.65" />
+              <stop offset="36%" stopColor="#e6ba58" />
+              <stop offset="44%" stopColor="#fff4c5" />
+              <stop offset="53%" stopColor="#c99532" stopOpacity="0.9" />
+              <stop offset="73%" stopColor="#b78020" stopOpacity="0.8" />
+              <stop offset="88%" stopColor="#f5cf72" />
+              <stop offset="94%" stopColor="#fff8dc" />
+              <stop offset="100%" stopColor="#bb8525" stopOpacity="0.35" />
+            </linearGradient>
+            <radialGradient id="hero-gold-flare">
+              <stop offset="0%" stopColor="#fffdf0" />
+              <stop offset="15%" stopColor="#ffe4a0" stopOpacity="0.9" />
+              <stop offset="45%" stopColor="#efbb4b" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#efbb4b" stopOpacity="0" />
+            </radialGradient>
+            <filter id="hero-gold-glow" filterUnits="userSpaceOnUse" x="-10" y="-10" width="120" height="120" colorInterpolationFilters="sRGB">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="0.32" result="softGlow" />
+              <feDropShadow in="SourceGraphic" dx="0" dy="0" stdDeviation="0.12" floodColor="#dba638" floodOpacity="0.5" result="goldHalo" />
+              <feMerge>
+                <feMergeNode in="softGlow" />
+                <feMergeNode in="goldHalo" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
           <path
-            className="wavy-line-1 text-primary-100/40"
+            className="wavy-line-1"
             d="M0,100 C30,60 50,80 100,0"
             fill="none"
-            stroke="currentColor"
-            strokeWidth="0.2"
+            stroke="url(#hero-gold-line)"
+            strokeWidth="1.8"
+            filter="url(#hero-gold-glow)"
+            vectorEffect="non-scaling-stroke"
           />
           <path
-            className="wavy-line-2 text-secondary-200/40"
+            className="wavy-line-2"
             d="M0,100 C40,90 60,60 100,20"
             fill="none"
-            stroke="currentColor"
-            strokeWidth="0.2"
+            stroke="url(#hero-gold-line)"
+            strokeWidth="1.4"
+            filter="url(#hero-gold-glow)"
+            vectorEffect="non-scaling-stroke"
           />
+          {[1, 2].map((lineNumber) => (
+            <g key={lineNumber} className={`gold-glint-${lineNumber}`}>
+              <g transform={lineNumber === 2 ? 'scale(0.75)' : undefined}>
+                <ellipse rx="2.4" ry="2.8" fill="url(#hero-gold-flare)" />
+                <path d="M-1.65,0 L-0.14,-0.12 L0,-1.3 L0.14,-0.12 L1.65,0 L0.14,0.12 L0,1.3 L-0.14,0.12 Z" fill="#fff9df" />
+                <circle r="0.12" fill="#ffffff" />
+              </g>
+            </g>
+          ))}
         </svg>
       </div>
 

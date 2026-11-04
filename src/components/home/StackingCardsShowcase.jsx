@@ -3,34 +3,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowRight, Package, Zap, Shield, Cpu, Cable, Lightbulb, Wrench, Settings, Box, BrainCircuit, Hammer, BatteryCharging } from 'lucide-react';
+import { ArrowDown, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import styles from './StackingCardsShowcase.module.css';
+import { createConcaveRenderer } from './concaveRenderer';
 
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
+if (typeof window !== 'undefined') gsap.registerPlugin(ScrollTrigger);
 
-const StackingCardsShowcase = () => {
-  const sectionRef = useRef(null);
-  const cardsContainerRef = useRef(null);
-  const cardsRefs = useRef([]);
-  const ctaRef = useRef(null);
-  const exploreButtonRef = useRef(null);
-  const isUnmountingRef = useRef(false);
-  const backgroundLinesRef = useRef(null);
-  const mobileBackgroundRef = useRef(null);
-  const [isMobileView, setIsMobileView] = useState(false);
-
-  // Detect mobile viewport
-  useEffect(() => {
-    const checkMobile = () => setIsMobileView(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // 12 products for desktop (4 stacks of 3)
-        const products = [
+const products = [
     {
       id: 1,
       title: 'Power & Hand Tools',
@@ -117,635 +97,202 @@ const StackingCardsShowcase = () => {
     }
   ];
 
+export default function StackingCardsShowcase() {
+  const sectionRef = useRef(null);
+  const stageRef = useRef(null);
+  const canvasRef = useRef(null);
+  const cardsRef = useRef([]);
+  const navigateRef = useRef(() => {});
+  const activeRef = useRef(0);
+  const [active, setActive] = useState(0);
+
   useEffect(() => {
-    if (typeof window === 'undefined' || !sectionRef.current) return;
+    const section = sectionRef.current;
+    const stage = stageRef.current;
+    const cards = cardsRef.current;
+    const media = gsap.matchMedia();
+    const select = (index) => {
+      const next = Math.max(0, Math.min(products.length - 1, index));
+      if (next !== activeRef.current) {
+        activeRef.current = next;
+        setActive(next);
+      }
+    };
 
-    // Reset unmounting flag
-    isUnmountingRef.current = false;
+    media.add({ reduced: '(prefers-reduced-motion: reduce)', animated: '(prefers-reduced-motion: no-preference)' }, (context) => {
+      if (context.conditions.reduced) {
+        const syncSelection = () => select(Math.round(stage.scrollLeft / (cards[0].offsetWidth + 24)));
+        navigateRef.current = (index) => {
+          const next = Math.max(0, Math.min(products.length - 1, index));
+          stage.scrollTo({ left: next * (cards[0].offsetWidth + 24), behavior: 'instant' });
+          select(next);
+        };
+        stage.addEventListener('scroll', syncSelection, { passive: true });
+        return () => stage.removeEventListener('scroll', syncSelection);
+      }
 
-    let scrollTriggerInstance = null;
-
-    const isMobile = window.innerWidth < 768;
-
-    const ctx = gsap.context(() => {
-      const cardsPerStack = isMobile ? 1 : 3;
-      const totalCards = isMobile ? 8 : 12;
-      const totalStacks = Math.ceil(totalCards / cardsPerStack);
-      const stackGap = 25; // 25px vertical gap between stacks
-
-      // Uneven offset for 3-card stacks (desktop)
-      const unevenOffsets = [
-        { x: -8, y: -2, rotation: -3 },  // Left card
-        { x: 0, y: 0, rotation: 0 },     // Center card
-        { x: 8, y: 2, rotation: 3 }      // Right card
-      ];
-
-      // Set initial positions for all cards
-      cardsRefs.current.slice(0, totalCards).forEach((card, index) => {
-        if (!card) return;
-
-        const stackNumber = Math.floor(index / cardsPerStack);
-        const positionInStack = index % cardsPerStack;
-
-        // Desktop: Calculate horizontal position with uneven offset
-        const baseX = isMobile ? 0 : positionInStack * 430; // Card width + gap (increased spacing)
-        const offset = isMobile ? { x: 0, y: 0, rotation: 0 } : unevenOffsets[positionInStack];
-
-        gsap.set(card, {
-          x: baseX + offset.x,
-          y: stackNumber === 0 ? offset.y : window.innerHeight,
-          rotateZ: stackNumber === 0 ? offset.rotation : 0,
-          opacity: 1,
-          scale: 1,
-          zIndex: stackNumber === 0 ? 100 : index,
-          transformOrigin: 'center center',
-          force3D: true
+      const renderer = createConcaveRenderer(canvasRef.current, products, (ready) => { section.dataset.rendered = String(ready); });
+      const playhead = { position: activeRef.current };
+      let step = cards[0].offsetWidth + 24;
+      const render = () => {
+        const camera = cards[0].offsetWidth / 1.25 * 4;
+        const radius = camera * 0.72;
+        stage.style.perspective = `${camera}px`;
+        section.style.setProperty('--gallery-progress', playhead.position / (products.length - 1));
+        cards.forEach((card, index) => {
+          const offset = index - playhead.position;
+          const distance = Math.abs(offset);
+          // Side cards come towards the viewer, forming the concave reference arc.
+          const angle = offset * step / radius;
+          const x = radius * Math.sin(angle);
+          const depth = radius * (1 - Math.cos(angle));
+          card.style.transform = `translate3d(calc(-50% + ${x}px), -50%, ${depth}px) rotateY(${-angle * 180 / Math.PI}deg)`;
+          card.style.visibility = distance > 3 ? 'hidden' : 'visible';
+          card.style.setProperty('--caption-opacity', Math.max(0, 1 - distance * 0.68));
+          card.style.zIndex = String(10 - Math.round(distance));
         });
-      });
+        renderer?.draw(playhead.position, cards[0].offsetWidth);
+        select(Math.round(playhead.position));
+      };
+      render();
 
-      // Set initial CTA state (hidden above viewport)
-      gsap.set(ctaRef.current, {
-        y: -window.innerHeight,
-        opacity: 0,
-        scale: 0.9,
-        force3D: true
-      });
-
-      // Create master timeline with ScrollTrigger
-      // Mobile: reduced scroll length and simpler scrub for smoother performance
-      const masterTimeline = gsap.timeline({
+      const animation = gsap.to(playhead, {
+        position: products.length - 1,
+        ease: 'none',
+        onUpdate: render,
         scrollTrigger: {
-          trigger: sectionRef.current,
-          pin: true,
-          scrub: isMobile ? 1 : 0.5, // Higher scrub value on mobile = less frequent updates = smoother
+          trigger: section,
           start: 'top top',
-          end: isMobile ? '+=300%' : '+=400%', // Shorter scroll distance on mobile
+          end: () => `+=${(products.length - 1) * Math.max(110, window.innerHeight * 0.18)}`,
+          pin: true,
+          scrub: 0.3,
           anticipatePin: 1,
           invalidateOnRefresh: true,
-          pinSpacing: true,
-          fastScrollEnd: true,
-          onRefresh: (self) => {
-            scrollTriggerInstance = self;
-          }
+          onRefresh: () => { step = cards[0].offsetWidth + 24; render(); },
         },
-        smoothChildTiming: true
       });
-
-      // Store the ScrollTrigger instance
-      scrollTriggerInstance = masterTimeline.scrollTrigger;
-
-      // Animation for each stack
-      for (let stackIndex = 1; stackIndex < totalStacks; stackIndex++) {
-        const stackStartIndex = stackIndex * cardsPerStack;
-        const stackEndIndex = Math.min(stackStartIndex + cardsPerStack, totalCards);
-
-        // Label for this stack phase
-        const label = `stack${stackIndex}`;
-        masterTimeline.add(label, stackIndex * 1);
-
-        // Compress previous stacks
-        for (let prevStackIndex = 0; prevStackIndex < stackIndex; prevStackIndex++) {
-          const prevStartIndex = prevStackIndex * cardsPerStack;
-          const prevEndIndex = Math.min(prevStartIndex + cardsPerStack, totalCards);
-
-          for (let i = prevStartIndex; i < prevEndIndex; i++) {
-            if (!cardsRefs.current[i]) continue;
-
-            const positionInStack = i % cardsPerStack;
-            const stackLevel = stackIndex - prevStackIndex;
-            const offset = isMobile ? { x: 0, y: 0, rotation: 0 } : unevenOffsets[positionInStack];
-            const baseX = isMobile ? 0 : positionInStack * 380;
-
-            masterTimeline.to(
-              cardsRefs.current[i],
-              {
-                x: baseX + offset.x,
-                y: -stackLevel * stackGap + offset.y,
-                rotateZ: offset.rotation,
-                scale: 1 - stackLevel * 0.08,
-                zIndex: prevStackIndex,
-                duration: 1,
-                ease: 'none',
-                force3D: true
-              },
-              label
-            );
-          }
+      const trigger = animation.scrollTrigger;
+      navigateRef.current = (index) => {
+        const next = Math.max(0, Math.min(products.length - 1, index));
+        const top = trigger.start + (trigger.end - trigger.start) * next / (products.length - 1);
+        window.scrollTo({ top, behavior: 'smooth' });
+      };
+      let drag = null;
+      let suppressClick = false;
+      const pointerDown = (event) => {
+        if (event.button !== 0) return;
+        drag = { x: event.clientX, y: event.clientY, scroll: window.scrollY, moved: false, pointer: event.pointerId };
+        suppressClick = false;
+      };
+      const pointerMove = (event) => {
+        if (!drag) return;
+        const dx = event.clientX - drag.x;
+        const dy = event.clientY - drag.y;
+        if (!drag.moved && Math.abs(dy) > Math.abs(dx)) return;
+        if (Math.abs(dx) > 8) {
+          drag.moved = true;
+          stage.setPointerCapture(event.pointerId);
+          const distancePerCard = (trigger.end - trigger.start) / (products.length - 1);
+          const top = Math.max(trigger.start, Math.min(trigger.end, drag.scroll - dx / step * distancePerCard));
+          window.scrollTo({ top, behavior: 'instant' });
         }
-
-        // Bring in new stack from bottom
-        for (let i = stackStartIndex; i < stackEndIndex; i++) {
-          if (!cardsRefs.current[i]) continue;
-
-          const positionInStack = i % cardsPerStack;
-          const offset = isMobile ? { x: 0, y: 0, rotation: 0 } : unevenOffsets[positionInStack];
-          const baseX = isMobile ? 0 : positionInStack * 380;
-
-          masterTimeline.fromTo(
-            cardsRefs.current[i],
-            {
-              y: window.innerHeight,
-              opacity: 1,
-              scale: 0.9,
-              rotateZ: 0,
-              force3D: true
-            },
-            {
-              x: baseX + offset.x,
-              y: offset.y,
-              rotateZ: offset.rotation,
-              opacity: 1,
-              scale: 1,
-              zIndex: 100,
-              duration: 1,
-              ease: 'none',
-              force3D: true
-            },
-            label
-          );
+      };
+      const pointerUp = () => {
+        if (drag?.moved) {
+          suppressClick = true;
+          const position = trigger.progress * (products.length - 1);
+          navigateRef.current(Math.round(position));
         }
-      }
-
-      // Exit animation - all cards scroll up
-      const exitLabel = 'exit';
-      masterTimeline.add(exitLabel, totalStacks * 1);
-
-      masterTimeline.to(
-        cardsRefs.current.slice(0, totalCards),
-        {
-          y: -window.innerHeight,
-          duration: 1,
-          ease: 'none',
-          stagger: 0.03,
-          force3D: true
-        },
-        exitLabel
-      );
-
-      // CTA reveal from top - comes down after cards exit
-      masterTimeline.fromTo(
-        ctaRef.current,
-        {
-          y: -window.innerHeight,
-          opacity: 0,
-          scale: 0.9,
-          force3D: true
-        },
-        {
-          y: 150,
-          opacity: 1,
-          scale: 1,
-          duration: 0.8,
-          ease: isMobile ? 'power2.out' : 'back.out(1.7)', // Simpler easing on mobile
-          force3D: true,
-          onComplete: () => {
-            // Skip fancy button animations on mobile
-            if (isMobile || isUnmountingRef.current) return;
-
-            if (exploreButtonRef.current) {
-              const accentGlowElement = exploreButtonRef.current.querySelector('.accent-glow');
-              const glowElement = exploreButtonRef.current.querySelector('.button-glow');
-
-              // Create a timeline to sync button scale with accent glow
-              const pulseTimeline = gsap.timeline();
-
-              // Button pulse and accent glow appear together
-              pulseTimeline.to(exploreButtonRef.current, {
-                scale: 1.15,
-                duration: 0.4,
-                ease: 'power2.inOut',
-              }, 0);
-
-              // Accent glow appears as button scales up
-              if (accentGlowElement) {
-                pulseTimeline.to(accentGlowElement, {
-                  opacity: 0.5,
-                  duration: 0.2,
-                  ease: 'power2.inOut',
-                }, 0);
-              }
-
-              // Regular glow effect
-              if (glowElement) {
-                pulseTimeline.to(glowElement, {
-                  opacity: 0.5,
-                  duration: 0.1,
-                  ease: 'power2.inOut',
-                }, 0);
-              }
-
-              // Button scales back down
-              pulseTimeline.to(exploreButtonRef.current, {
-                scale: 1,
-                duration: 0.4,
-                ease: 'power2.inOut',
-              });
-
-              // Accent glow fades but stays visible
-              if (accentGlowElement) {
-                pulseTimeline.to(accentGlowElement, {
-                  opacity: 0.5,
-                  duration: 0.4,
-                  ease: 'power2.inOut',
-                  onComplete: () => {
-                    // Then continuous subtle pulsing
-                    if (!isUnmountingRef.current && accentGlowElement) {
-                      gsap.to(accentGlowElement, {
-                        opacity: 0.5,
-                        duration: 1,
-                        yoyo: true,
-                        repeat: -1,
-                        ease: 'sine.inOut',
-                      });
-                    }
-                  }
-                });
-              }
-
-              // Regular glow fades
-              if (glowElement) {
-                pulseTimeline.to(glowElement, {
-                  opacity: 0,
-                  duration: 0.4,
-                  ease: 'power2.inOut',
-                });
-              }
-
-              // Continuous subtle floating animation
-              gsap.to(exploreButtonRef.current, {
-                y: -8,
-                duration: 2.5,
-                ease: 'sine.inOut',
-                yoyo: true,
-                repeat: -1,
-              });
-            }
-          },
-        },
-        exitLabel + '+=0.5'
-      );
-
-      // Hold CTA visible for a moment before scroll unlocks
-      masterTimeline.to(ctaRef.current, {
-        y: 150,
-        opacity: 1,
-        scale: 1,
-        duration: 0.5,
-        force3D: true
-      });
-
-      // Background image scroll animation - synced with card animations
-      // Desktop background
-      if (backgroundLinesRef.current && !isMobile) {
-        const img = backgroundLinesRef.current.querySelector('img');
-        if (img) {
-          // Wait for image to load to get actual height
-          const setupImageAnimation = () => {
-            const imageHeight = img.naturalHeight;
-            const viewportHeight = window.innerHeight;
-
-            // Calculate travel distance for precise sync
-            // Start with bottom 40% of image visible
-            const startY = -imageHeight * 0.53;
-            const endY = -imageHeight * -0.2;
-
-            // Set initial state - image partially visible at start
-            gsap.set(img, {
-              y: startY,
-              opacity: 1,
-              force3D: true
-            });
-
-            // Create timeline synced to main scroll
-            const imageTimeline = gsap.timeline({
-              scrollTrigger: {
-                trigger: sectionRef.current,
-                start: 'top top',
-                end: '+=400%',
-                scrub: 0.5,
-                invalidateOnRefresh: true
-              }
-            });
-
-            // Move from partially visible to completely off-screen at bottom
-            imageTimeline.to(img, {
-              y: endY,
-              duration: 1,
-              ease: 'none',
-              force3D: true
-            });
-          };
-
-          if (img.complete) {
-            setupImageAnimation();
-          } else {
-            img.addEventListener('load', setupImageAnimation);
-          }
-        }
-      }
-
-      // Mobile background - animation for mobileBackgound1.png
-      // Added directly to master timeline to work properly with pinned section
-      if (mobileBackgroundRef.current && isMobile) {
-        const mobileImg = mobileBackgroundRef.current.querySelector('img');
-        if (mobileImg) {
-          const setupMobileImageAnimation = () => {
-            const imageHeight = mobileImg.naturalHeight;
-
-            const startY = -imageHeight * 0.28;
-            const endY = -imageHeight * -0.1;
-
-            // Set initial state
-            gsap.set(mobileImg, {
-              y: startY,
-              opacity: 1,
-              force3D: true
-            });
-
-            // Get total duration of existing master timeline
-            const totalDuration = masterTimeline.duration();
-
-            // Add background scroll spanning the entire master timeline
-            masterTimeline.fromTo(mobileImg, {
-              y: startY,
-              force3D: true
-            }, {
-              y: endY,
-              duration: totalDuration,
-              ease: 'none',
-              force3D: true
-            }, 0);
-          };
-
-          if (mobileImg.complete && mobileImg.naturalHeight > 0) {
-            setupMobileImageAnimation();
-          } else {
-            mobileImg.addEventListener('load', setupMobileImageAnimation);
-          }
-        }
-      }
-
-    }, sectionRef);
+        drag = null;
+      };
+      const pointerCancel = () => { drag = null; };
+      const suppressDragClick = (event) => {
+        if (suppressClick) { event.preventDefault(); event.stopPropagation(); suppressClick = false; }
+      };
+      stage.addEventListener('pointerdown', pointerDown);
+      stage.addEventListener('pointermove', pointerMove);
+      stage.addEventListener('pointerup', pointerUp);
+      stage.addEventListener('pointercancel', pointerCancel);
+      stage.addEventListener('click', suppressDragClick, true);
+      const refreshFrame = requestAnimationFrame(() => ScrollTrigger.refresh());
+      return () => {
+        cancelAnimationFrame(refreshFrame);
+        renderer?.destroy();
+        stage.style.removeProperty('perspective');
+        section.style.removeProperty('--gallery-progress');
+        stage.removeEventListener('pointerdown', pointerDown);
+        stage.removeEventListener('pointermove', pointerMove);
+        stage.removeEventListener('pointerup', pointerUp);
+        stage.removeEventListener('pointercancel', pointerCancel);
+        stage.removeEventListener('click', suppressDragClick, true);
+        cards.forEach((card) => {
+          card.style.removeProperty('transform');
+          card.style.removeProperty('visibility');
+          card.style.removeProperty('z-index');
+          card.style.removeProperty('--caption-opacity');
+        });
+      };
+    });
 
     return () => {
-      // Set unmounting flag
-      isUnmountingRef.current = true;
-
-      // Kill the ScrollTrigger instance first
-      if (scrollTriggerInstance) {
-        try {
-          scrollTriggerInstance.kill(true);
-        } catch (e) {
-          // Ignore errors during cleanup
-        }
-      }
-
-      // Kill all GSAP animations on specific elements
-      cardsRefs.current.forEach(card => {
-        if (card) {
-          try {
-            gsap.killTweensOf(card);
-          } catch (e) {
-            // Ignore errors during cleanup
-          }
-        }
-      });
-
-      if (ctaRef.current) {
-        try {
-          gsap.killTweensOf(ctaRef.current);
-        } catch (e) {
-          // Ignore errors during cleanup
-        }
-      }
-
-      if (exploreButtonRef.current) {
-        try {
-          gsap.killTweensOf(exploreButtonRef.current);
-        } catch (e) {
-          // Ignore errors during cleanup
-        }
-      }
-
-      if (cardsContainerRef.current) {
-        try {
-          gsap.killTweensOf(cardsContainerRef.current);
-        } catch (e) {
-          // Ignore errors during cleanup
-        }
-      }
-
-      if (backgroundLinesRef.current) {
-        try {
-          gsap.killTweensOf(backgroundLinesRef.current);
-          const img = backgroundLinesRef.current.querySelector('img');
-          if (img) {
-            gsap.killTweensOf(img);
-            img.removeEventListener('load', () => { });
-          }
-        } catch (e) {
-          // Ignore errors during cleanup
-        }
-      }
-
-
-
-      // Revert the GSAP context
-      try {
-        ctx.revert();
-      } catch (e) {
-        // Ignore errors during cleanup
-      }
-
-      // Clear all remaining ScrollTriggers
-      try {
-        ScrollTrigger.getAll().forEach(trigger => {
-          if (trigger.vars && trigger.vars.trigger === sectionRef.current) {
-            trigger.kill(true);
-          }
-        });
-      } catch (e) {
-        // Ignore errors during cleanup
-      }
+      media.revert();
+      navigateRef.current = () => {};
     };
   }, []);
 
-  // Responsive handler
-  useEffect(() => {
-    const handleResize = () => {
-      ScrollTrigger.refresh();
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const navigate = (index) => navigateRef.current(index);
+  const handleKeyDown = (event) => {
+    const destination = {
+      ArrowLeft: activeRef.current - 1,
+      ArrowRight: activeRef.current + 1,
+      Home: 0,
+      End: products.length - 1,
+    }[event.key];
+    if (destination === undefined) return;
+    event.preventDefault();
+    navigate(destination);
+  };
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative min-h-screen overflow-hidden bg-gradient-to-b from-white via-gray-50 to-white"
-      aria-label="Product Showcase"
-    >
-      {/* Skip link for accessibility */}
-      <a
-        href="#after-stacking-showcase"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[1000] focus:px-4 focus:py-2 focus:bg-white focus:text-primary-600 focus:rounded-lg focus:shadow-lg"
-      >
-        Skip product showcase
-      </a>
+    <>
+      <section ref={sectionRef} className={styles.showcase} aria-label="Product showcase" aria-roledescription="carousel" onKeyDown={handleKeyDown}>
+        <div className={styles.background} aria-hidden="true" />
+        <a href="#after-stacking-showcase" className={styles.skip}>Skip product showcase</a>
+        <div className={styles.heading}>
+          <span className={styles.eyebrow}>THE ROYAL RANGE</span>
+          <p>Built for every job.</p>
+        </div>
 
-      {/* Scroll-Synced Background Image - Desktop */}
-      <div
-        ref={backgroundLinesRef}
-        className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block"
-        style={{ backgroundColor: '#FBF8EC' }}
-      >
-        <img
-          src="/background.png"
-          alt=""
-          className="absolute w-full h-auto object-cover"
-          style={{ willChange: 'transform' }}
-        />
-      </div>
-
-      {/* Scroll-Synced Background Image - Mobile */}
-      <div
-        ref={mobileBackgroundRef}
-        className="absolute inset-0 overflow-hidden pointer-events-none md:hidden"
-        style={{ backgroundColor: '#FBF8EC' }}
-      >
-        <img
-          src="/mobileBackgound1.png"
-          alt=""
-          className="absolute w-full h-auto object-cover"
-          style={{ willChange: 'transform' }}
-        />
-      </div>
-
-      {/* Animated Background — hidden on mobile */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
-        <div className="absolute top-1/3 -left-48 w-96 h-96 bg-primary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-        <div className="absolute top-2/3 -right-48 w-96 h-96 bg-secondary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" style={{ animationDelay: '2s' }}></div>
-      </div>
-
-      <div className="relative h-screen flex items-start justify-center px-4 sm:px-6 lg:px-8 pt-[168px] md:pt-72">
-        {/* Cards Container with Perspective */}
-        <div
-          ref={cardsContainerRef}
-          className="relative w-full max-w-7xl mx-auto"
-          style={{
-            perspective: '2000px',
-            transformStyle: 'preserve-3d'
-          }}
-        >
-          {/* Cards */}
-          {products
-            .filter((_, index) => !isMobileView || index < 8) // Only show 8 cards on mobile
-            .map((product, index) => (
-              <div
-                key={product.id}
-                ref={(el) => (cardsRefs.current[index] = el)}
-                className="group absolute inset-0 mx-auto w-full md:w-auto"
-                style={{
-                  transformStyle: 'preserve-3d',
-                  willChange: 'transform'
-                }}
-              >
-                <a href={product.link} className="glass-card block cursor-pointer h-[420px] w-full max-w-md md:max-w-xs mx-auto md:ml-12 rounded-3xl shadow-2xl overflow-hidden">
-                  <div className="relative h-full w-full">
-                    {/* Background Image with Parallax — no hover scale on mobile */}
-                    <div
-                      className="absolute inset-0 bg-cover bg-center md:transition-transform md:duration-700 md:group-hover:scale-110"
-                      style={{ backgroundImage: `url(${product.image})` }}
-                    >
-                      <div className={`absolute inset-0 bg-gradient-to-br ${product.color} opacity-30 md:group-hover:opacity-40 md:transition-opacity md:duration-300`}></div>
-                    </div>
-
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
-
-                    {/* Content */}
-                    <div className="relative h-full flex flex-col justify-end p-8 text-white">
-                      <div className="md:transform md:transition-transform md:duration-300 md:group-hover:translate-y-[-4px]">
-                        <h3 className="text-2xl font-bold mb-3">{product.title}</h3>
-                        
-                        <div className="inline-flex items-center text-sm font-semibold bg-white/10 md:backdrop-blur-sm rounded-full px-4 py-2 md:group-hover:bg-white/20 md:transition-all md:duration-300">
-                          <span>View Products</span>
-                          <ArrowRight className="w-4 h-4 ml-2 md:group-hover:translate-x-1 md:transition-transform" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Shine effect on hover — desktop only */}
-                    <div className="hidden md:block absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                    </div>
-                  </div>
-                </a>
+        <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" />
+        <div ref={stageRef} className={styles.stage}>
+          {products.map((product, index) => (
+            <article key={product.id} ref={(element) => { cardsRef.current[index] = element; }} className={styles.card} aria-label={`${index + 1} of ${products.length}: ${product.title}`} aria-roledescription="slide">
+              <a href={product.link} className={styles.imageLink} tabIndex={active === index ? 0 : -1} aria-label={`View ${product.title}`} onClick={(event) => {
+                  if (active !== index) { event.preventDefault(); navigate(index); }
+                }}>
+                <img src={product.image} alt={product.title} draggable="false" decoding="async" className={styles.image} />
+              </a>
+              <div className={styles.caption}>
+                <h3>{product.title}</h3>
+                <a href={product.link} tabIndex={active === index ? 0 : -1}>View products <ArrowRight size={14} aria-hidden="true" /></a>
               </div>
-            ))}
+            </article>
+          ))}
+        </div>
 
-          {/* CTA Button (slides down from top after cards exit) */}
-          <div
-            ref={ctaRef}
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
-            style={{ willChange: 'transform, opacity' }}
-          >
-            <Link
-              href="/products"
-              ref={exploreButtonRef}
-              className="pointer-events-auto group relative"
-            >
-              {/* Accent glow - continuous pulsing — desktop only */}
-              <div className="accent-glow hidden md:block absolute -inset-2 bg-primary-500 rounded-full opacity-0 blur-2xl transition-all duration-300 group-hover:opacity-70 group-hover:blur-3xl"></div>
-
-              {/* Animated glow background — desktop only */}
-              <div className="button-glow hidden md:block absolute -inset-1 bg-gradient-to-r from-primary-600 via-primary-700 to-primary-600 rounded-full opacity-0 blur-xl transition-all duration-300 group-hover:opacity-100 animate-gradient-xy"></div>
-
-              {/* Main button */}
-              <div className="relative px-10 py-5 bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 text-white rounded-full font-bold text-xl shadow-2xl overflow-hidden transition-all duration-300 group-hover:scale-105 group-hover:shadow-primary-500/50">
-                {/* Shimmer effect — desktop only */}
-                <div className="hidden md:block absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out"></div>
-                </div>
-
-                {/* Particles effect on hover — desktop only */}
-                <div className="hidden md:block absolute inset-0 overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="particle absolute top-1/4 left-1/4 w-1 h-1 bg-white rounded-full animate-particle-1"></div>
-                  <div className="particle absolute top-1/2 left-1/3 w-1 h-1 bg-white rounded-full animate-particle-2"></div>
-                  <div className="particle absolute top-3/4 left-2/3 w-1 h-1 bg-white rounded-full animate-particle-3"></div>
-                  <div className="particle absolute top-1/3 left-3/4 w-1 h-1 bg-white rounded-full animate-particle-4"></div>
-                </div>
-
-                {/* Border animation — desktop only */}
-                <div className="hidden md:block absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="absolute inset-0 rounded-full border-2 border-white/50 animate-ping-slow"></div>
-                </div>
-
-                {/* Button content */}
-                <div className="relative flex items-center space-x-3">
-                  <span className="relative">
-                    Explore More Products
-                    {/* Underline animation */}
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
-                  </span>
-                  <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300 group-hover:rotate-[-10deg]" />
-
-                  {/* Sparkle on hover — desktop only */}
-                  <span className="hidden md:block absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    ✨
-                  </span>
-                </div>
-              </div>
-            </Link>
+        <div className={styles.bottom}>
+          <div className={styles.controls}>
+            <button type="button" onClick={() => navigate(activeRef.current - 1)} disabled={active === 0} aria-label="Previous product"><ChevronLeft size={20} /></button>
+            <span className={styles.counter} aria-live="polite" aria-atomic="true"><span>{String(active + 1).padStart(2, '0')}</span><span className={styles.total}> / {String(products.length).padStart(2, '0')}</span></span>
+            <button type="button" onClick={() => navigate(activeRef.current + 1)} disabled={active === products.length - 1} aria-label="Next product"><ChevronRight size={20} /></button>
+          </div>
+          <div className={styles.footer}>
+            <span className={styles.scrollHint}><ArrowDown size={14} aria-hidden="true" /> Scroll to explore</span>
+            <Link href="/products" className={styles.explore}>Explore all products <ArrowRight size={16} aria-hidden="true" /></Link>
           </div>
         </div>
-      </div>
-
-      {/* Anchor for skip link */}
-      <div id="after-stacking-showcase"></div>
-    </section>
+      </section>
+      <div id="after-stacking-showcase" tabIndex={-1} />
+    </>
   );
-};
-
-export default StackingCardsShowcase;
+}

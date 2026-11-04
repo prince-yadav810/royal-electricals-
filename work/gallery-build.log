@@ -1,0 +1,157 @@
+
+> mega-enterprise-landing@1.0.0 build
+> next build
+
+  ▲ Next.js 14.2.33
+  - Experiments (use with caution):
+    · optimizeCss
+
+   Creating an optimized production build ...
+Browserslist: browsers data (caniuse-lite) is 11 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+Browserslist: browsers data (caniuse-lite) is 11 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/118) ...
+   Generating static pages (29/118) 
+Time 52.308666
+Time 49.710833
+   Generating static pages (58/118) 
+   Generating static pages (88/118) 
+ ✓ Generating static pages (118/118)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                               Size     First Load JS
+┌ ○ /                                                     14.9 kB         164 kB
+├ ○ /_not-found                                           876 B          88.2 kB
+├ ○ /about                                                46.1 kB         181 kB
+├ ƒ /api/send-email                                       0 B                0 B
+├ ○ /contact                                              15.3 kB         103 kB
+├ ○ /products                                             2.46 kB        98.9 kB
+├ ○ /products/construction-chemicals/adhesives-sealants   149 B           109 kB
+├ ○ /products/construction-chemicals/concrete-admixtures  148 B           109 kB
+├ ○ /products/construction-chemicals/exterior-paints      149 B           109 kB
+├ ○ /products/construction-chemicals/interior-paints      149 B           109 kB
+├ ○ /products/construction-chemicals/wall-putty-primers   148 B           109 kB
+├ ○ /products/construction-chemicals/waterproofing        149 B           109 kB
+├ ○ /products/construction-chemicals/wood-coatings        149 B           109 kB
+├ ○ /products/construction-equipment/bar-bending-cutting  149 B           109 kB
+├ ○ /products/construction-equipment/compactors-rollers   149 B           109 kB
+├ ○ /products/construction-equipment/concrete-mixers      148 B           109 kB
+├ ○ /products/construction-equipment/concrete-vibrators   149 B           109 kB
+├ ○ /products/construction-equipment/earth-moving         149 B           109 kB
+├ ○ /products/construction-equipment/scaffolding          149 B           109 kB
+├ ○ /products/construction-equipment/tower-cranes         149 B           109 kB
+├ ○ /products/construction-equipment/welding-machines     148 B           109 kB
+├ ○ /products/electrical/cable-tray                       149 B           109 kB
+├ ○ /products/electrical/electrical-panels                149 B           109 kB
+├ ○ /products/electrical/fans                             149 B           109 kB
+├ ○ /products/electrical/led                              149 B           109 kB
+├ ○ /products/electrical/lugs-glands                      149 B           109 kB
+├ ○ /products/electrical/motors                           149 B           109 kB
+├ ○ /products/electrical/switchgears                      149 B           109 kB
+├ ○ /products/electrical/wires-cables                     148 B           109 kB
+├ ○ /products/gearboxes                                   2.34 kB        98.7 kB
+├ ○ /products/gearboxes/bevel-helical-gearbox             148 B           109 kB
+├ ○ /products/gearboxes/helical-gearbox                   149 B           109 kB
+├ ○ /products/gearboxes/planetary-gearbox                 149 B           109 kB
+├ ○ /products/gearboxes/worm-gearbox                      149 B           109 kB
+├ ○ /products/hardware/abrasives                          148 B           109 kB
+├ ○ /products/hardware/fasteners                          149 B           109 kB
+├ ○ /products/hardware/hessian-cloths                     148 B           109 kB
+├ ○ /products/hardware/lubricants                         148 B           109 kB
+├ ○ /products/hardware/power-hand-tools                   149 B           109 kB
+├ ○ /products/hardware/tarpaulin                          149 B           109 kB
+├ ○ /products/hardware/water-tanks                        149 B           109 kB
+├ ○ /products/lighting                                    2.4 kB         98.8 kB
+├ ○ /products/lighting/commercial-lighting                147 B           109 kB
+├ ○ /products/lighting/emergency-lighting                 148 B           109 kB
+├ ○ /products/lighting/industrial-lighting                149 B           109 kB
+├ ○ /products/lighting/led-lights                         148 B           109 kB
+├ ○ /products/lighting/street-lighting                    148 B           109 kB
+├ ○ /products/lubricants                                  2.3 kB         98.7 kB
+├ ○ /products/lubricants/greases                          149 B           109 kB
+├ ○ /products/lubricants/industrial-oils                  149 B           109 kB
+├ ○ /products/lubricants/specialty-lubricants             149 B           109 kB
+├ ○ /products/lubricants/transformer-oil                  149 B           109 kB
+├ ○ /products/motors                                      2.56 kB          99 kB
+├ ○ /products/motors/brake-motors                         149 B           109 kB
+├ ○ /products/motors/crane-duty-motors                    149 B           109 kB
+├ ○ /products/motors/geared-motors                        149 B           109 kB
+├ ○ /products/motors/induction-motors                     149 B           109 kB
+├ ○ /products/motors/submersible-motors                   149 B           109 kB
+├ ○ /products/panel-accessories                           2.27 kB        98.7 kB
+├ ○ /products/panel-accessories/cable-glands-lugs         149 B           109 kB
+├ ○ /products/panel-accessories/enclosures-busbars        149 B           109 kB
+├ ○ /products/panel-accessories/meters-instruments        149 B           109 kB
+├ ○ /products/panel-accessories/push-buttons-indicators   149 B           109 kB
+├ ○ /products/panel-accessories/terminal-blocks           148 B           109 kB
+├ ○ /products/pipes-fittings/cpvc                         149 B           109 kB
+├ ○ /products/pipes-fittings/flanges-gaskets              149 B           109 kB
+├ ○ /products/pipes-fittings/gi                           149 B           109 kB
+├ ○ /products/pipes-fittings/hdpe                         149 B           109 kB
+├ ○ /products/pipes-fittings/ms                           149 B           109 kB
+├ ○ /products/pipes-fittings/pvc                          149 B           109 kB
+├ ○ /products/pipes-fittings/ss                           149 B           109 kB
+├ ○ /products/pipes-fittings/upvc                         149 B           109 kB
+├ ○ /products/pipes-fittings/valves                       149 B           109 kB
+├ ○ /products/safety-ppe                                  2.64 kB          99 kB
+├ ○ /products/safety-ppe/eye-protection                   149 B           109 kB
+├ ○ /products/safety-ppe/fall-protection                  149 B           109 kB
+├ ○ /products/safety-ppe/fire-safety                      149 B           109 kB
+├ ○ /products/safety-ppe/respiratory-protection           149 B           109 kB
+├ ○ /products/safety-ppe/road-safety                      149 B           109 kB
+├ ○ /products/safety-ppe/safety-gloves                    149 B           109 kB
+├ ○ /products/safety-ppe/safety-wear                      149 B           109 kB
+├ ○ /products/safety-ppe/workwear                         149 B           109 kB
+├ ○ /products/safety/eye-protection                       149 B           109 kB
+├ ○ /products/safety/fall-protection                      148 B           109 kB
+├ ○ /products/safety/fire-safety                          149 B           109 kB
+├ ○ /products/safety/rainy-season                         149 B           109 kB
+├ ○ /products/safety/respiratory-protection               147 B           109 kB
+├ ○ /products/safety/road-safety                          149 B           109 kB
+├ ○ /products/safety/safety-gloves                        147 B           109 kB
+├ ○ /products/solar                                       2.16 kB        98.6 kB
+├ ○ /products/solar/solar-accessories                     149 B           109 kB
+├ ○ /products/solar/solar-batteries                       148 B           109 kB
+├ ○ /products/solar/solar-inverters                       149 B           109 kB
+├ ○ /products/solar/solar-panels                          148 B           109 kB
+├ ○ /products/structural-steel/ms-angles                  149 B           109 kB
+├ ○ /products/structural-steel/ms-beams                   149 B           109 kB
+├ ○ /products/structural-steel/ms-channels                149 B           109 kB
+├ ○ /products/structural-steel/ms-pipes                   148 B           109 kB
+├ ○ /products/structural-steel/ms-plates                  149 B           109 kB
+├ ○ /products/structural-steel/porta-cabins               149 B           109 kB
+├ ○ /products/structural-steel/tmt-bars                   149 B           109 kB
+├ ○ /products/switchgears                                 2.52 kB        98.9 kB
+├ ○ /products/switchgears/contactors-relays               149 B           109 kB
+├ ○ /products/switchgears/mcb-rccb                        149 B           109 kB
+├ ○ /products/switchgears/mccb-acb                        149 B           109 kB
+├ ○ /products/switchgears/starters-drives                 149 B           109 kB
+├ ○ /products/switchgears/surge-protection                148 B           109 kB
+├ ○ /products/switchgears/switches-isolators              149 B           109 kB
+├ ○ /products/wires-cables                                2.55 kB          99 kB
+├ ○ /products/wires-cables/building-wires                 149 B           109 kB
+├ ○ /products/wires-cables/communication-cables           148 B           109 kB
+├ ○ /products/wires-cables/control-cables                 148 B           109 kB
+├ ○ /products/wires-cables/flexible-wires                 149 B           109 kB
+├ ○ /products/wires-cables/industrial-cables              148 B           109 kB
+├ ○ /products/wires-cables/power-cables                   149 B           109 kB
+└ ○ /sitemap.xml                                          0 B                0 B
++ First Load JS shared by all                             87.3 kB
+  ├ chunks/2117-90cc473928a8fa72.js                       31.7 kB
+  ├ chunks/fd9d1056-4e1ff149ed6e99c7.js                   53.6 kB
+  └ other shared chunks (total)                           1.98 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
